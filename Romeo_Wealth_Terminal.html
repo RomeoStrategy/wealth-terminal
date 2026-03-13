@@ -306,6 +306,7 @@
                 <div class="card">
                     <h3>Realized P&L</h3>
                     <div class="value" id="port-realized">$0.00</div>
+                    <span class="action-link" style="color: var(--danger);" onclick="resetRealizedPnL()">Reset P&L</span>
                 </div>
             </div>
 
@@ -835,6 +836,22 @@
 
         function savePortfolio() { localStorage.setItem('rs_portfolioDB', JSON.stringify(portData)); renderPortfolio(); }
 
+        // SIFIRLAMA (RESET) FONKSIYONU EKLENDI
+        function resetRealizedPnL() {
+            if (confirm("Gerçekleşen Kar/Zarar (Realized P&L) verisini sıfırlamak istediğine emin misin?")) {
+                portData.realized = 0;
+                savePortfolio();
+            }
+        }
+
+        // HISSE SILME (DELETE) FONKSIYONU EKLENDI
+        function deleteAsset(ticker) {
+            if(confirm(ticker + " hissesini portföyden tamamen silmek istediğine emin misin? (Bu işlem P&L veya Nakit bakiyeni etkilemez, sadece varlığı tablodan kaldırır.)")) {
+                portData.holdings = portData.holdings.filter(h => h.ticker !== ticker);
+                savePortfolio();
+            }
+        }
+
         async function refreshSpotPrices() {
             if(portData.holdings.length === 0) return;
 
@@ -945,6 +962,7 @@
 
             displayHoldings.forEach(h => {
                 const pnlClass = h.unrPnL > 0 ? "text-green" : (h.unrPnL < 0 ? "text-red" : "");
+                // ACTION TABLOSUNA DELETE BUTONU EKLENDI
                 tbody.innerHTML += `
                     <tr>
                         <td style="text-align:left;"><strong>${h.ticker}</strong></td>
@@ -957,6 +975,7 @@
                         <td style="text-align:center;">
                             <button class="btn btn-sm btn-outline" onclick="openBuyModal('${h.ticker}')">Buy</button>
                             <button class="btn btn-sm btn-gold" onclick="openSellModal('${h.ticker}')">Sell</button>
+                            <button class="btn btn-sm btn-outline" style="color:var(--danger); border-color:var(--danger);" onclick="deleteAsset('${h.ticker}')">X</button>
                         </td>
                     </tr>
                 `;
