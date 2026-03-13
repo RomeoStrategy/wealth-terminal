@@ -215,6 +215,11 @@
                     <div class="card">
                         <h3>Win Rate</h3>
                         <div class="value text-gold" id="opt-winrate">0%</div>
+                        <div class="value sub-value" style="font-size: 11px; margin-top: 12px; letter-spacing: 0.1em; text-transform: uppercase;">
+                            <span style="color:var(--muted);">LONG:</span> <span id="opt-winrate-long" style="font-weight:600; color:var(--navy);">0%</span> 
+                            <span style="color:var(--border); font-weight:300; margin: 0 5px;">|</span> 
+                            <span style="color:var(--muted);">SHORT:</span> <span id="opt-winrate-short" style="font-weight:600; color:var(--navy);">0%</span>
+                        </div>
                     </div>
                     <div class="card">
                         <h3>Winning / Losing</h3>
@@ -266,11 +271,8 @@
                 <div class="section-card" style="padding: 20px;">
                     <div class="table-container">
                         <table>
-                            <thead>
-                                <tr>
-                                    <th>Date</th><th>Ticker</th><th>Type</th><th>Exp</th><th>Strike</th><th>Entry</th><th>Cost</th><th>DTE</th><th>Status</th><th>Net P&L</th><th style="text-align: center; cursor: default;">Actions</th>
-                                </tr>
-                            </thead>
+                            <thead id="opt-head">
+                                </thead>
                             <tbody id="opt-body"></tbody>
                         </table>
                     </div>
@@ -358,6 +360,7 @@
                 <input type="hidden" id="optId">
                 <div class="form-grid">
                     <div class="form-group"><label>Entry Date</label><input type="date" id="optEntryDate" required></div>
+                    <div class="form-group"><label>Side</label><select id="optSide"><option value="long">Long (Buy)</option><option value="short">Short (Sell)</option></select></div>
                     <div class="form-group"><label>Ticker</label><input type="text" id="optTicker" required style="text-transform: uppercase;"></div>
                     <div class="form-group"><label>Option Type</label><select id="optType"><option>Call</option><option>Put</option></select></div>
                     <div class="form-group"><label>Expiration Date</label><input type="date" id="optExpiration" required></div>
@@ -365,7 +368,7 @@
                     <div class="form-group"><label>Contracts</label><input type="number" id="optContracts" required value="1"></div>
                     <div class="form-group"><label>Spot Entry</label><input type="number" step="0.01" id="optSpotEntry" required></div>
                     <div class="form-group"><label>Premium Entry</label><input type="number" step="0.01" id="optPremiumEntry" required></div>
-                    <div class="form-group full-width"><label>Delta</label><input type="number" step="0.01" id="optDelta" value="0.50"></div>
+                    <div class="form-group"><label>Delta</label><input type="number" step="0.01" id="optDelta" value="0.50"></div>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn btn-outline" onclick="closeModal('addOptModal')">Cancel</button>
@@ -503,7 +506,6 @@
                     if (data.optionsDB) localStorage.setItem('rs_optionsDB', JSON.stringify(data.optionsDB));
                     if (data.portfolioDB) localStorage.setItem('rs_portfolioDB', JSON.stringify(data.portfolioDB));
                     
-                    // Reload data into variables
                     optTrades = data.optionsDB || [];
                     portData = data.portfolioDB || { cash: 50000, realized: 0, holdings: [] };
                     
@@ -516,7 +518,7 @@
                 }
             };
             reader.readAsText(file);
-            event.target.value = ''; // Reset input
+            event.target.value = ''; 
         }
 
         // NAVIGATION LOGIC (Main)
@@ -568,51 +570,140 @@
         }
 
         // ==========================================
-        // OPTIONS MODULE
+        // OPTIONS MODULE (Advanced Analyst Edition)
         // ==========================================
         let optTrades = JSON.parse(localStorage.getItem('rs_optionsDB')) || [];
+        
+        // Sorting State for Options
+        let optSortField = 'entryDate';
+        let optSortAsc = false;
+
+        function triggerOptSort(field) {
+            if (optSortField === field) {
+                optSortAsc = !optSortAsc;
+            } else {
+                optSortField = field;
+                optSortAsc = false; // default to descending for new sort field
+            }
+            renderOptions();
+        }
 
         function saveOptions() { localStorage.setItem('rs_optionsDB', JSON.stringify(optTrades)); renderOptions(); }
 
         function renderOptions() {
+            const thead = document.getElementById('opt-head');
             const tbody = document.getElementById('opt-body');
             tbody.innerHTML = '';
             
-            let stats = { open: 0, capital: 0, sumDelta: 0, totalPnL: 0, wins: 0, losses: 0, winPnL: 0, lossPnL: 0, totalDays: 0, closedCount: 0 };
-            let breakdown = { "Target Hit": {c:0, w:0, l:0, pnl:0}, "Stopped Out": {c:0, w:0, l:0, pnl:0}, "Time Decay / Manual": {c:0, w:0, l:0, pnl:0}, "Earnings": {c:0, w:0, l:0, pnl:0} };
+            let stats = { 
+                open: 0, capital: 0, sumDelta: 0, 
+                totalPnL: 0, wins: 0, losses: 0, winPnL: 0, lossPnL: 0, totalDays: 0, closedCount: 0,
+                longWins: 0, longLosses: 0, longClosed: 0,
+                shortWins: 0, shortLosses: 0, shortClosed: 0
+            };
+            
+            let breakdown = {
+                long: { "Target Hit": {c:0, w:0, l:0, pnl:0}, "Stopped Out": {c:0, w:0, l:0, pnl:0}, "Time Decay / Manual": {c:0, w:0, l:0, pnl:0}, "Earnings": {c:0, w:0, l:0, pnl:0} },
+                short: { "Target Hit": {c:0, w:0, l:0, pnl:0}, "Stopped Out": {c:0, w:0, l:0, pnl:0}, "Time Decay / Manual": {c:0, w:0, l:0, pnl:0}, "Earnings": {c:0, w:0, l:0, pnl:0} }
+            };
 
-            optTrades.sort((a, b) => (b.isOpen - a.isOpen) || (new Date(b.entryDate) - new Date(a.entryDate)));
-
+            // Pre-calculate all dynamic fields before sorting
             optTrades.forEach(t => {
+                t.side = t.side || 'long'; 
+                t.fullType = t.side.toUpperCase() + ' ' + t.type;
                 t.totalCost = t.premiumEntry * t.contracts * 100;
+                
                 const expD = new Date(t.expiration);
                 const entryD = new Date(t.entryDate);
                 
                 t.currentDTE = t.isOpen ? Math.floor((expD - TODAY) / 86400000) : Math.floor((expD - new Date(t.exitDate)) / 86400000);
                 t.daysHeld = t.isOpen ? Math.floor((TODAY - entryD) / 86400000) : Math.floor((new Date(t.exitDate) - entryD) / 86400000);
                 
-                if (!t.isOpen) { t.netPnL = (t.premiumExit - t.premiumEntry) * t.contracts * 100; t.isWin = t.netPnL > 0; } else { t.netPnL = 0; }
+                if (!t.isOpen) { 
+                    if (t.side === 'short') {
+                        t.netPnL = (t.premiumEntry - t.premiumExit) * t.contracts * 100; 
+                    } else {
+                        t.netPnL = (t.premiumExit - t.premiumEntry) * t.contracts * 100; 
+                    }
+                    t.isWin = t.netPnL > 0; 
+                } else { 
+                    t.netPnL = 0; 
+                }
 
+                // Stats calculation
                 if (t.isOpen) { 
                     stats.open++; 
                     stats.capital += t.totalCost; 
                     stats.sumDelta += parseFloat(t.delta) || 0;
-                } 
-                else {
+                } else {
                     stats.closedCount++; 
                     stats.totalPnL += t.netPnL;
                     stats.totalDays += (t.daysHeld > 0 ? t.daysHeld : 0);
                     
                     if (t.isWin) { stats.wins++; stats.winPnL += t.netPnL; } else { stats.losses++; stats.lossPnL += Math.abs(t.netPnL); }
                     
-                    if(t.exitReason && breakdown[t.exitReason]) {
-                        breakdown[t.exitReason].c++;
-                        t.isWin ? breakdown[t.exitReason].w++ : breakdown[t.exitReason].l++;
-                        breakdown[t.exitReason].pnl += t.netPnL;
+                    if (t.side === 'long') {
+                        stats.longClosed++;
+                        if (t.isWin) stats.longWins++; else stats.longLosses++;
+                        
+                        if(t.exitReason && breakdown.long[t.exitReason]) {
+                            breakdown.long[t.exitReason].c++;
+                            t.isWin ? breakdown.long[t.exitReason].w++ : breakdown.long[t.exitReason].l++;
+                            breakdown.long[t.exitReason].pnl += t.netPnL;
+                        }
+                    } else {
+                        stats.shortClosed++;
+                        if (t.isWin) stats.shortWins++; else stats.shortLosses++;
+                        
+                        if(t.exitReason && breakdown.short[t.exitReason]) {
+                            breakdown.short[t.exitReason].c++;
+                            t.isWin ? breakdown.short[t.exitReason].w++ : breakdown.short[t.exitReason].l++;
+                            breakdown.short[t.exitReason].pnl += t.netPnL;
+                        }
                     }
                 }
+            });
 
-                // Render Table Row
+            // Apply Sorting to display array
+            let displayOpts = [...optTrades];
+            if (optSortField) {
+                displayOpts.sort((a, b) => {
+                    let valA = a[optSortField];
+                    let valB = b[optSortField];
+
+                    if (typeof valA === 'string') {
+                        return optSortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                    }
+                    if (typeof valA === 'boolean') {
+                        let numA = valA ? 1 : 0;
+                        let numB = valB ? 1 : 0;
+                        return optSortAsc ? numA - numB : numB - numA;
+                    }
+                    return optSortAsc ? valA - valB : valB - valA;
+                });
+            }
+
+            // Render Interactive Headers
+            const getOptArrow = (field) => optSortField === field ? (optSortAsc ? ' <span style="font-size:10px; color:var(--gold);">▲</span>' : ' <span style="font-size:10px; color:var(--gold);">▼</span>') : '';
+            
+            thead.innerHTML = `
+                <tr>
+                    <th style="cursor:pointer;" onclick="triggerOptSort('entryDate')">Date${getOptArrow('entryDate')}</th>
+                    <th style="cursor:pointer;" onclick="triggerOptSort('ticker')">Ticker${getOptArrow('ticker')}</th>
+                    <th style="cursor:pointer;" onclick="triggerOptSort('fullType')">Type${getOptArrow('fullType')}</th>
+                    <th style="cursor:pointer;" onclick="triggerOptSort('expiration')">Exp${getOptArrow('expiration')}</th>
+                    <th style="cursor:pointer;" onclick="triggerOptSort('strike')">Strike${getOptArrow('strike')}</th>
+                    <th style="cursor:pointer;" onclick="triggerOptSort('premiumEntry')">Entry${getOptArrow('premiumEntry')}</th>
+                    <th style="cursor:pointer;" onclick="triggerOptSort('totalCost')">Cost${getOptArrow('totalCost')}</th>
+                    <th style="cursor:pointer;" onclick="triggerOptSort('currentDTE')">DTE${getOptArrow('currentDTE')}</th>
+                    <th style="cursor:pointer;" onclick="triggerOptSort('isOpen')">Status${getOptArrow('isOpen')}</th>
+                    <th style="cursor:pointer;" onclick="triggerOptSort('netPnL')">Net P&L${getOptArrow('netPnL')}</th>
+                    <th style="text-align: center; cursor: default;">Actions</th>
+                </tr>
+            `;
+
+            // Render Table Rows based on sorted displayOpts
+            displayOpts.forEach(t => {
                 const statusColor = t.isOpen ? "var(--gold)" : "var(--muted)";
                 const pnlClass = t.isOpen ? "" : (t.netPnL > 0 ? "text-green" : (t.netPnL < 0 ? "text-red" : ""));
                 
@@ -620,7 +711,7 @@
                     <tr>
                         <td style="text-align:left;">${t.entryDate.substring(5)}</td>
                         <td><strong>${t.ticker}</strong></td>
-                        <td style="font-family:'Tenor Sans';">${t.type}</td>
+                        <td style="font-family:'Tenor Sans';">${t.fullType}</td>
                         <td>${t.expiration.substring(5)}</td>
                         <td>${currency}${t.strike}</td>
                         <td>${currency}${t.premiumEntry.toFixed(2)}</td>
@@ -636,18 +727,24 @@
                 `;
             });
 
-            // Update Detailed KPI Grid
+            // Update KPI Grid
             const pnlEl = document.getElementById('opt-pnl');
             pnlEl.innerText = `${stats.totalPnL < 0 ? '-' : ''}${currency}${formatMoney(Math.abs(stats.totalPnL))}`;
             pnlEl.className = `value ${stats.totalPnL > 0 ? 'text-green' : (stats.totalPnL < 0 ? 'text-red' : '')}`;
             
-            document.getElementById('opt-winrate').innerText = stats.closedCount > 0 ? Math.round((stats.wins / stats.closedCount) * 100) + '%' : '0%';
+            let totalWr = stats.closedCount > 0 ? Math.round((stats.wins / stats.closedCount) * 100) : 0;
+            let longWr = stats.longClosed > 0 ? Math.round((stats.longWins / stats.longClosed) * 100) : 0;
+            let shortWr = stats.shortClosed > 0 ? Math.round((stats.shortWins / stats.shortClosed) * 100) : 0;
+
+            document.getElementById('opt-winrate').innerText = totalWr + '%';
+            document.getElementById('opt-winrate-long').innerText = longWr + '%';
+            document.getElementById('opt-winrate-short').innerText = shortWr + '%';
+
             document.getElementById('opt-wins').innerText = stats.wins;
             document.getElementById('opt-losses').innerText = stats.losses;
             document.getElementById('opt-avgwin').innerText = stats.wins > 0 ? `${currency}${formatMoney(stats.winPnL / stats.wins)}` : currency+"0";
             document.getElementById('opt-avgloss').innerText = stats.losses > 0 ? `-${currency}${formatMoney(stats.lossPnL / stats.losses)}` : currency+"0";
 
-            // Update Active Positions & Exposure Summary
             document.getElementById('opt-open-count').innerText = stats.open;
             document.getElementById('opt-capital').innerText = currency + formatMoney(stats.capital);
             document.getElementById('opt-total-count').innerText = optTrades.length;
@@ -657,27 +754,42 @@
             // Update Exit Breakdown List
             const bdContainer = document.getElementById('opt-breakdown-container');
             bdContainer.innerHTML = '';
-            for(const [reason, data] of Object.entries(breakdown)) {
-                if(data.c > 0) {
-                    const bdClass = data.pnl > 0 ? 'text-green' : (data.pnl < 0 ? 'text-red' : '');
-                    bdContainer.innerHTML += `
-                        <div class="bd-row">
-                            <div>
-                                <div class="bd-title">${reason}</div>
-                                <div class="bd-stats">${data.c} Trades &middot; <span class="text-green">${data.w}W</span> / <span class="text-red">${data.l}L</span></div>
+
+            function renderBreakdownSection(title, dataObj) {
+                let html = `<div style="margin-top:20px; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:5px;"><span style="font-size:10px; font-weight:600; color:var(--gold); letter-spacing:0.2em; text-transform:uppercase;">${title}</span></div>`;
+                let hasData = false;
+                
+                for(const [reason, data] of Object.entries(dataObj)) {
+                    if(data.c > 0) {
+                        hasData = true;
+                        const bdClass = data.pnl > 0 ? 'text-green' : (data.pnl < 0 ? 'text-red' : '');
+                        html += `
+                            <div class="bd-row" style="padding:12px 0;">
+                                <div>
+                                    <div class="bd-title" style="font-size:16px;">${reason}</div>
+                                    <div class="bd-stats">${data.c} Trades &middot; <span class="text-green">${data.w}W</span> / <span class="text-red">${data.l}L</span></div>
+                                </div>
+                                <div class="bd-pnl ${bdClass}">${data.pnl < 0 ? '-' : ''}${currency}${formatMoney(Math.abs(data.pnl))}</div>
                             </div>
-                            <div class="bd-pnl ${bdClass}">${data.pnl < 0 ? '-' : ''}${currency}${formatMoney(Math.abs(data.pnl))}</div>
-                        </div>
-                    `;
+                        `;
+                    }
                 }
+                if(hasData) bdContainer.innerHTML += html;
             }
-            if(bdContainer.innerHTML === '') bdContainer.innerHTML = '<p style="color:var(--muted); font-family:\'Tenor Sans\', sans-serif; font-size: 13px;">No closed trades yet.</p>';
+
+            renderBreakdownSection("Long Positions", breakdown.long);
+            renderBreakdownSection("Short Positions", breakdown.short);
+
+            if(bdContainer.innerHTML === '') {
+                bdContainer.innerHTML = '<p style="color:var(--muted); font-family:\'Tenor Sans\', sans-serif; font-size: 13px;">No closed trades yet.</p>';
+            }
         }
 
         document.getElementById('optTradeForm').addEventListener('submit', function(e) {
             e.preventDefault();
             optTrades.push({
                 id: Date.now(),
+                side: document.getElementById('optSide').value,
                 entryDate: document.getElementById('optEntryDate').value,
                 ticker: document.getElementById('optTicker').value.toUpperCase(),
                 type: document.getElementById('optType').value,
@@ -713,7 +825,7 @@
 
 
         // ==========================================
-        // SPOT PORTFOLIO MODULE: SORT & LIVE PRICES
+        // SPOT PORTFOLIO MODULE
         // ==========================================
         let portData = JSON.parse(localStorage.getItem('rs_portfolioDB')) || { cash: 50000, realized: 0, holdings: [] };
         let allocChart = null; 
@@ -899,14 +1011,12 @@
             });
         }
 
-        // Cash Update
         document.getElementById('cashForm').addEventListener('submit', function(e) {
             e.preventDefault();
             portData.cash = parseFloat(document.getElementById('cashInput').value);
             savePortfolio(); closeModal('cashModal');
         });
 
-        // Buy Logic
         function openBuyModal(ticker = '') {
             document.getElementById('buyTicker').value = ticker;
             openModal('buyAssetModal');
@@ -936,7 +1046,6 @@
             refreshSpotPrices();
         });
 
-        // Sell Logic
         function openSellModal(ticker) {
             const h = portData.holdings.find(h => h.ticker === ticker);
             document.getElementById('sellTicker').value = ticker;
@@ -972,7 +1081,6 @@
             savePortfolio(); closeModal('sellAssetModal');
         });
 
-        // Update Current Price Logic (Manual Fallback)
         function openUpdatePrice(ticker) {
             const h = portData.holdings.find(h => h.ticker === ticker);
             document.getElementById('updateTicker').value = ticker;
