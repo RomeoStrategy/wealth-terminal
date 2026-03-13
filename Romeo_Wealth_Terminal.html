@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Romeo Strategy B.V. | Wealth Terminal</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Cormorant+SC:wght@300;400;600&family=Tenor+Sans&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root { 
+        --bg: #f6f5f1; 
+        --navy: #0d1b2a; 
+        --gold: #b8965a; 
+        --border: #e0ddd6; 
+        --muted: #9a9a9a;
+        --white: #ffffff;
+        --success: #2d6a4f; 
+        --danger: #85182a;  
+        --font-num: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body { 
+        background: var(--bg); color: var(--navy); 
+        font-family: 'Tenor Sans', sans-serif; font-size: 14px; line-height: 1.6;
+        overflow-y: scroll;
+    }
+
+    /* Typography */
+    h1, h2, h3 { font-family: 'Cormorant Garamond', serif; font-weight: 400; color: var(--navy); }
+    .label { font-size: 9px; letter-spacing: 0.48em; text-transform: uppercase; color: var(--gold); margin-bottom: 20px; display: block;}
+    .section-title { font-size: 28px; line-height: 1.35; margin-bottom: 30px; }
+    
+    .text-green { color: var(--success); }
+    .text-red { color: var(--danger); }
+    .text-gold { color: var(--gold); }
+
+    /* Navbar */
+    nav { 
+        position: fixed; top: 0; left: 0; right: 0; height: 65px; 
+        background: var(--bg); border-bottom: 1px solid var(--border); 
+        display: flex; align-items: center; justify-content: space-between; 
+        padding: 0 60px; z-index: 99; 
+    }
+    .logo { 
+        font-family: 'Cormorant SC', serif; font-size: 15px; font-weight: 600; 
+        letter-spacing: 0.22em; text-transform: uppercase; color: var(--navy); text-decoration: none; cursor: pointer;
+    }
+    .logo span { color: var(--gold); font-weight: 300; }
+    
+    .nav-links { display: flex; gap: 36px; list-style: none; }
+    .nav-btn { 
+        font-size: 9px; letter-spacing: 0.32em; text-transform: uppercase; 
+        color: var(--muted); text-decoration: none; background: transparent; 
+        border: none; cursor: pointer; font-family: 'Tenor Sans', sans-serif; transition: 0.3s;
+    }
+    .nav-btn:hover { color: var(--navy); }
+    .nav-btn.active { color: var(--navy); border-bottom: 1px solid var(--gold); padding-bottom: 4px; }
+
+    /* Buttons */
+    .btn {
+        padding: 12px 24px; font-size: 9px; letter-spacing: 0.32em; text-transform: uppercase;
+        border: none; cursor: pointer; font-family: 'Tenor Sans', sans-serif; transition: 0.2s;
+    }
+    .btn-navy { background: var(--navy); color: var(--bg); }
+    .btn-navy:hover { opacity: 0.9; }
+    .btn-gold { background: var(--gold); color: var(--navy); }
+    .btn-gold:hover { opacity: 0.9; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--navy); }
+    .btn-outline:hover { background: #fff; }
+    .btn-sm { padding: 6px 12px; font-size: 8px; letter-spacing: 0.2em; margin-right: 4px; font-weight: 600; }
+    .btn-outline:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Layout */
+    .container { padding: 120px 60px 60px 60px; max-width: 1400px; margin: 0 auto; }
+    .page { display: none; animation: fadeIn 0.4s ease; }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Landing Page */
+    .landing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; }
+    .landing-card { background: var(--white); border: 1px solid var(--border); padding: 80px 40px; text-align: center; cursor: pointer; transition: all 0.3s ease; }
+    .landing-card:hover { border-color: var(--gold); transform: translateY(-5px); box-shadow: 0 10px 30px rgba(13,27,42,0.05); }
+    .landing-card h2 { font-size: 32px; margin-bottom: 16px; }
+    .landing-card p { color: var(--muted); font-size: 15px; margin-bottom: 30px; max-width: 300px; margin-inline: auto; }
+
+    /* Sub-Navigation (For Options) */
+    .sub-nav { display: flex; gap: 24px; border-bottom: 1px solid var(--border); margin-bottom: 30px; }
+    .sub-nav-btn { background: transparent; border: none; font-family: 'Tenor Sans', sans-serif; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); padding-bottom: 12px; cursor: pointer; border-bottom: 2px solid transparent; transition: 0.3s; }
+    .sub-nav-btn.active { color: var(--navy); border-bottom-color: var(--gold); font-weight: 600;}
+    .sub-nav-btn:hover { color: var(--navy); }
+    .opt-view { display: none; }
+    .opt-view.active { display: block; animation: fadeIn 0.3s ease; }
+
+    /* Cards & KPIs */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin-bottom: 40px; }
+    .card { background: var(--white); border: 1px solid var(--border); padding: 32px 24px; text-align: center; position: relative;}
+    .card h3 { font-family: 'Tenor Sans', sans-serif; font-size: 9px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+    .card .value { font-family: var(--font-num); font-size: 32px; font-weight: 600; color: var(--navy); line-height: 1.2; letter-spacing: -0.5px;}
+    .card .sub-value { font-family: var(--font-num); font-size: 16px; margin-top: 5px; font-weight: 500; }
+
+    .dashboard-sections { display: grid; grid-template-columns: 2fr 1fr; gap: 40px; margin-bottom: 40px;}
+    .section-card { background: var(--white); border: 1px solid var(--border); padding: 40px; }
+    
+    /* Breakdown List */
+    .bd-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--border); }
+    .bd-row:last-child { border-bottom: none; }
+    .bd-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--navy); }
+    .bd-stats { font-family: var(--font-num); font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .bd-pnl { font-family: var(--font-num); font-size: 16px; font-weight: 600; }
+
+    /* Chart Container */
+    .chart-container { position: relative; width: 100%; max-width: 300px; margin: 0 auto; aspect-ratio: 1; }
+    
+    /* Tables */
+    .table-container { overflow-x: auto; margin-top: 20px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; white-space: nowrap; font-family: var(--font-num); }
+    
+    th { 
+        font-family: 'Cormorant SC', serif; font-size: 12px; letter-spacing: 0.15em; color: var(--navy); 
+        font-weight: 600; text-transform: uppercase; padding: 16px 12px; text-align: right; 
+        border-bottom: 1px solid var(--border); transition: color 0.2s; user-select: none;
+    }
+    th:hover { color: var(--gold); }
+    th:first-child, td:first-child { text-align: left; }
+    
+    td { padding: 16px 12px; text-align: right; border-bottom: 1px solid var(--border); }
+    tbody tr:hover { background-color: #faf9f6; }
+    td strong { font-size: 14px; font-weight: 600; }
+
+    /* Modals */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(13,27,42,0.6); z-index:999; align-items:center; justify-content:center; backdrop-filter: blur(4px); }
+    .modal-card { background: var(--bg); padding: 48px; max-width: 700px; width: 90%; position: relative; border: 1px solid var(--border); max-height: 90vh; overflow-y: auto; }
+    .modal-card h2 { font-size: 24px; margin-bottom: 24px; text-align: center; }
+    
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .form-group { display: flex; flex-direction: column; text-align: left; }
+    .form-group label { font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+    .form-group input, .form-group select { padding: 12px 16px; border: 1px solid var(--border); background: var(--white); font-family: var(--font-num); font-size: 14px; color: var(--navy); outline: none; }
+    .form-group input:focus, .form-group select:focus { border-color: var(--gold); }
+    .full-width { grid-column: span 2; }
+    .modal-actions { margin-top: 32px; display: flex; justify-content: center; gap: 16px; }
+
+    /* Action Links */
+    .action-link { cursor: pointer; font-size: 10px; color: var(--gold); text-transform: uppercase; letter-spacing: 0.1em; font-family: 'Tenor Sans'; text-decoration: underline; margin-top: 10px; display: inline-block;}
+    .action-link:hover { color: var(--navy); }
+    
+    .update-indicator { font-size: 11px; color: var(--muted); font-family: 'Tenor Sans'; margin-left: 15px; }
+
+    @media (max-width: 768px) {
+        nav { padding: 0 24px; }
+        .nav-links { display: none; }
+        .container { padding: 100px 24px 40px 24px; }
+        .dashboard-sections { grid-template-columns: 1fr; }
+        .landing-grid { grid-template-columns: 1fr; }
+        .form-grid { grid-template-columns: 1fr; }
+        .full-width { grid-column: span 1; }
+    }
+</style>
+</head>
+<body>
+
+    <nav>
+        <a onclick="switchPage('home')" class="logo">Romeo <span>Strategy</span></a>
+        <div class="nav-links" id="main-nav-links" style="display:none;">
+            <button class="nav-btn" id="nav-home" onclick="switchPage('home')">Home</button>
+            <button class="nav-btn" id="nav-options" onclick="switchPage('options')">Options Journal</button>
+            <button class="nav-btn" id="nav-portfolio" onclick="switchPage('portfolio')">Spot Portfolio</button>
+        </div>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <div id="nav-action-btn"></div>
+            <button class="nav-btn" style="font-size: 16px; padding: 5px; border-bottom: none;" onclick="openModal('settingsModal')" title="Data Settings">⚙️</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <div id="page-home" class="page active" style="text-align: center; margin-top: 40px;">
+            <span class="label">Wealth Management Terminal</span>
+            <h1 class="section-title" style="font-size: 42px;">Select <em>Module.</em></h1>
+            
+            <div class="landing-grid">
+                <div class="landing-card" onclick="switchPage('options')">
+                    <span class="label">Derivatives</span>
+                    <h2>Options Journal</h2>
+                    <p>Track directional long calls and puts. Monitor Greeks, DTE, and measure swing trading performance.</p>
+                    <button class="btn btn-navy">Open Terminal</button>
+                </div>
+                
+                <div class="landing-card" onclick="switchPage('portfolio')">
+                    <span class="label">Long Term</span>
+                    <h2>Spot Portfolio</h2>
+                    <p>Manage equity holdings. Track average costs, asset allocation, cash balance, and realized returns.</p>
+                    <button class="btn btn-gold">Open Terminal</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-options" class="page">
+            <span class="label">Derivatives</span>
+            <h1 class="section-title">Options <em>Terminal.</em></h1>
+
+            <div class="sub-nav">
+                <button class="sub-nav-btn active" id="sub-opt-dashboard" onclick="switchOptTab('dashboard')">📊 Dashboard</button>
+                <button class="sub-nav-btn" id="sub-opt-ledger" onclick="switchOptTab('ledger')">📋 Trade Ledger</button>
+            </div>
+            
+            <div id="opt-view-dashboard" class="opt-view active">
+                <div class="kpi-grid">
+                    <div class="card">
+                        <h3>Total Net P&L</h3>
+                        <div class="value" id="opt-pnl">$0.00</div>
+                    </div>
+                    <div class="card">
+                        <h3>Win Rate</h3>
+                        <div class="value text-gold" id="opt-winrate">0%</div>
+                    </div>
+                    <div class="card">
+                        <h3>Winning / Losing</h3>
+                        <div class="value" style="font-size: 28px;"><span class="text-green" id="opt-wins">0</span> <span style="color:var(--border); font-weight:300;">|</span> <span class="text-red" id="opt-losses">0</span></div>
+                    </div>
+                    <div class="card">
+                        <h3>Avg Win / Loss</h3>
+                        <div class="value sub-value"><span class="text-green" id="opt-avgwin">$0</span> <span style="color:var(--border); font-weight:300;">|</span> <span class="text-red" id="opt-avgloss">$0</span></div>
+                    </div>
+                </div>
+
+                <div class="dashboard-sections">
+                    <div class="section-card">
+                        <span class="label">Analysis</span>
+                        <h2 class="section-title" style="font-size: 22px;">Exit <em>Breakdown.</em></h2>
+                        <div id="opt-breakdown-container">
+                            </div>
+                    </div>
+
+                    <div class="section-card">
+                        <span class="label">Exposure</span>
+                        <h2 class="section-title" style="font-size: 22px;">Active <em>Positions.</em></h2>
+                        
+                        <div class="bd-row">
+                            <div class="bd-title">Open Trades</div>
+                            <div class="bd-pnl" id="opt-open-count">0</div>
+                        </div>
+                        <div class="bd-row">
+                            <div class="bd-title">Capital at Risk</div>
+                            <div class="bd-pnl" id="opt-capital">$0.00</div>
+                        </div>
+                        <div class="bd-row">
+                            <div class="bd-title">Total Trades Taken</div>
+                            <div class="bd-pnl" id="opt-total-count">0</div>
+                        </div>
+                        <div class="bd-row">
+                            <div class="bd-title">Avg Days Held</div>
+                            <div class="bd-pnl" id="opt-avgdays">0</div>
+                        </div>
+                        <div class="bd-row">
+                            <div class="bd-title">Avg Open Delta</div>
+                            <div class="bd-pnl" id="opt-delta">0.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="opt-view-ledger" class="opt-view">
+                <div class="section-card" style="padding: 20px;">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th><th>Ticker</th><th>Type</th><th>Exp</th><th>Strike</th><th>Entry</th><th>Cost</th><th>DTE</th><th>Status</th><th>Net P&L</th><th style="text-align: center; cursor: default;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="opt-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="page-portfolio" class="page">
+            <span class="label">Equities</span>
+            <h1 class="section-title">Spot <em>Portfolio.</em></h1>
+            
+            <div class="kpi-grid">
+                <div class="card">
+                    <h3>Total Equity</h3>
+                    <div class="value" id="port-equity">$0.00</div>
+                </div>
+                <div class="card">
+                    <h3>Total Invested</h3>
+                    <div class="value" id="port-invested">$0.00</div>
+                </div>
+                <div class="card">
+                    <h3>Cash Balance</h3>
+                    <div class="value text-gold" id="port-cash">$0.00</div>
+                    <span class="action-link" onclick="openModal('cashModal')">Update Cash</span>
+                </div>
+                <div class="card">
+                    <h3>Unrealized P&L</h3>
+                    <div class="value" id="port-unrealized">$0.00</div>
+                </div>
+                <div class="card">
+                    <h3>Realized P&L</h3>
+                    <div class="value" id="port-realized">$0.00</div>
+                </div>
+            </div>
+
+            <div class="dashboard-sections">
+                <div class="section-card" style="padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 10px 0 10px;">
+                        <h2 class="section-title" style="font-size: 20px; margin: 0;">Holdings <em>Ledger.</em></h2>
+                        <div style="display:flex; align-items:center;">
+                            <button class="btn btn-outline" style="padding: 8px 16px;" id="refreshPricesBtn" onclick="refreshSpotPrices()">🔄 Fetch Prices</button>
+                            <span id="lastUpdateText" class="update-indicator">Auto-updating...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table>
+                            <thead id="port-head">
+                                </thead>
+                            <tbody id="port-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="section-card" style="display:flex; flex-direction:column; align-items:center;">
+                    <h2 class="section-title" style="font-size: 20px;">Asset <em>Allocation.</em></h2>
+                    <div class="chart-container">
+                        <canvas id="allocationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 450px; text-align: center;">
+            <span class="label" style="margin-bottom:10px;">System Preferences</span>
+            <h2>Data Management</h2>
+            <p style="color: var(--muted); font-size: 13px; margin-bottom: 30px;">Your data is stored locally. Export a backup to save your progress, or import an existing file to restore your terminal.</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <button class="btn btn-navy" style="padding: 16px;" onclick="exportData()">⬇️ Export Backup (.json)</button>
+                <button class="btn btn-outline" style="padding: 16px;" onclick="triggerImport()">⬆️ Import Backup</button>
+                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
+            </div>
+            
+            <button onclick="closeModal('settingsModal')" style="margin-top:25px; background:none; border:none; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); cursor:pointer;">Close</button>
+        </div>
+    </div>
+
+    <div id="addOptModal" class="modal-overlay">
+        <div class="modal-card">
+            <span class="label" style="text-align:center; margin-bottom:10px;">Trade Entry</span><h2>Record Position</h2>
+            <form id="optTradeForm">
+                <input type="hidden" id="optId">
+                <div class="form-grid">
+                    <div class="form-group"><label>Entry Date</label><input type="date" id="optEntryDate" required></div>
+                    <div class="form-group"><label>Ticker</label><input type="text" id="optTicker" required style="text-transform: uppercase;"></div>
+                    <div class="form-group"><label>Option Type</label><select id="optType"><option>Call</option><option>Put</option></select></div>
+                    <div class="form-group"><label>Expiration Date</label><input type="date" id="optExpiration" required></div>
+                    <div class="form-group"><label>Strike Price</label><input type="number" step="0.01" id="optStrike" required></div>
+                    <div class="form-group"><label>Contracts</label><input type="number" id="optContracts" required value="1"></div>
+                    <div class="form-group"><label>Spot Entry</label><input type="number" step="0.01" id="optSpotEntry" required></div>
+                    <div class="form-group"><label>Premium Entry</label><input type="number" step="0.01" id="optPremiumEntry" required></div>
+                    <div class="form-group full-width"><label>Delta</label><input type="number" step="0.01" id="optDelta" value="0.50"></div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('addOptModal')">Cancel</button>
+                    <button type="submit" class="btn btn-navy">Save Position</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="closeOptModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 400px;">
+            <span class="label" style="text-align:center; margin-bottom:10px;">Trade Exit</span><h2>Close Position</h2>
+            <form id="optCloseForm">
+                <input type="hidden" id="optCloseId">
+                <div class="form-group" style="margin-bottom: 20px;"><label>Exit Date</label><input type="date" id="optExitDate" required></div>
+                <div class="form-group" style="margin-bottom: 20px;"><label>Premium Exit</label><input type="number" step="0.01" id="optPremiumExit" required></div>
+                <div class="form-group" style="margin-bottom: 30px;">
+                    <label>Exit Reason</label>
+                    <select id="optExitReason" required>
+                        <option value="Target Hit">Target Hit</option>
+                        <option value="Stopped Out">Stopped Out</option>
+                        <option value="Time Decay / Manual">Time Decay / Manual</option>
+                        <option value="Earnings">Earnings</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('closeOptModal')">Cancel</button>
+                    <button type="submit" class="btn btn-gold">Confirm Exit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="buyAssetModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 500px;">
+            <span class="label" style="text-align:center; margin-bottom:10px;">Spot Market</span><h2>Buy Asset</h2>
+            <form id="buyAssetForm">
+                <div class="form-group" style="margin-bottom: 15px;"><label>Ticker</label><input type="text" id="buyTicker" required style="text-transform: uppercase;"></div>
+                <div class="form-grid" style="margin-bottom: 20px;">
+                    <div class="form-group"><label>Shares</label><input type="number" step="0.01" id="buyShares" required></div>
+                    <div class="form-group"><label>Price per Share ($)</label><input type="number" step="0.01" id="buyPrice" required></div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('buyAssetModal')">Cancel</button>
+                    <button type="submit" class="btn btn-navy">Execute Buy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="sellAssetModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 500px;">
+            <span class="label" style="text-align:center; margin-bottom:10px;">Spot Market</span><h2>Sell Asset <span id="sellTickerLabel" style="color:var(--gold);"></span></h2>
+            <form id="sellAssetForm">
+                <input type="hidden" id="sellTicker">
+                <p style="font-size:12px; color:var(--muted); text-align:center; margin-bottom:15px;">Available Shares: <strong id="sellAvailableShares">0</strong></p>
+                <div class="form-grid" style="margin-bottom: 20px;">
+                    <div class="form-group"><label>Shares to Sell</label><input type="number" step="0.01" id="sellShares" required></div>
+                    <div class="form-group"><label>Sell Price ($)</label><input type="number" step="0.01" id="sellPrice" required></div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('sellAssetModal')">Cancel</button>
+                    <button type="submit" class="btn btn-gold">Execute Sell</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="priceUpdateModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 400px;">
+            <span class="label" style="text-align:center; margin-bottom:10px;">Market Data</span><h2>Update Price <span id="updateTickerLabel" style="color:var(--gold);"></span></h2>
+            <form id="updatePriceForm">
+                <input type="hidden" id="updateTicker">
+                <div class="form-group" style="margin-bottom: 20px;"><label>New Current Price ($)</label><input type="number" step="0.01" id="updatePrice" required></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('priceUpdateModal')">Cancel</button>
+                    <button type="submit" class="btn btn-navy">Save Price</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="cashModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 400px;">
+            <span class="label" style="text-align:center; margin-bottom:10px;">Account</span><h2>Deposit / Withdraw</h2>
+            <form id="cashForm">
+                <div class="form-group" style="margin-bottom: 20px;"><label>New Total Cash Balance ($)</label><input type="number" step="0.01" id="cashInput" required></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('cashModal')">Cancel</button>
+                    <button type="submit" class="btn btn-navy">Update Balance</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // GLOBAL CONSTANTS & FORMATTERS
+        const currency = "$";
+        const TODAY = new Date('2026-03-12T00:00:00'); 
+        let autoUpdateInterval = null;
+        
+        function formatMoney(num) {
+            return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        // ==========================================
+        // DATA BACKUP & RESTORE LOGIC
+        // ==========================================
+        function exportData() {
+            const backupData = {
+                optionsDB: JSON.parse(localStorage.getItem('rs_optionsDB')) || [],
+                portfolioDB: JSON.parse(localStorage.getItem('rs_portfolioDB')) || { cash: 50000, realized: 0, holdings: [] }
+            };
+            
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href",     dataStr);
+            downloadAnchorNode.setAttribute("download", "romeo_terminal_backup.json");
+            document.body.appendChild(downloadAnchorNode); 
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function triggerImport() {
+            document.getElementById('importFile').click();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.optionsDB) localStorage.setItem('rs_optionsDB', JSON.stringify(data.optionsDB));
+                    if (data.portfolioDB) localStorage.setItem('rs_portfolioDB', JSON.stringify(data.portfolioDB));
+                    
+                    // Reload data into variables
+                    optTrades = data.optionsDB || [];
+                    portData = data.portfolioDB || { cash: 50000, realized: 0, holdings: [] };
+                    
+                    renderOptions();
+                    renderPortfolio();
+                    closeModal('settingsModal');
+                    alert("✅ Data successfully restored!");
+                } catch (err) {
+                    alert("❌ Invalid backup file. Please select a valid Romeo Terminal JSON backup.");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset input
+        }
+
+        // NAVIGATION LOGIC (Main)
+        function switchPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById('page-' + pageId).classList.add('active');
+            
+            const navLinks = document.getElementById('main-nav-links');
+            const actionBtn = document.getElementById('nav-action-btn');
+            
+            if(autoUpdateInterval) { clearInterval(autoUpdateInterval); } 
+
+            if(pageId === 'home') {
+                navLinks.style.display = 'none';
+                actionBtn.innerHTML = '';
+            } else {
+                navLinks.style.display = 'flex';
+                document.getElementById('nav-' + pageId).classList.add('active');
+                
+                if(pageId === 'options') {
+                    actionBtn.innerHTML = `<button class="btn btn-navy" onclick="openModal('addOptModal')">New Option Trade</button>`;
+                    renderOptions();
+                } else if(pageId === 'portfolio') {
+                    actionBtn.innerHTML = `<button class="btn btn-gold" onclick="openBuyModal()">Buy Asset</button>`;
+                    renderPortfolio();
+                    refreshSpotPrices();
+                    autoUpdateInterval = setInterval(refreshSpotPrices, 10000); 
+                }
+            }
+            window.scrollTo(0,0);
+        }
+
+        // NAVIGATION LOGIC (Options Sub-Tabs)
+        function switchOptTab(tabId) {
+            document.querySelectorAll('.opt-view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.sub-nav-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById('opt-view-' + tabId).classList.add('active');
+            document.getElementById('sub-opt-' + tabId).classList.add('active');
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { 
+            document.getElementById(id).style.display = 'none'; 
+            const form = document.querySelector(`#${id} form`);
+            if(form) form.reset(); 
+        }
+
+        // ==========================================
+        // OPTIONS MODULE
+        // ==========================================
+        let optTrades = JSON.parse(localStorage.getItem('rs_optionsDB')) || [];
+
+        function saveOptions() { localStorage.setItem('rs_optionsDB', JSON.stringify(optTrades)); renderOptions(); }
+
+        function renderOptions() {
+            const tbody = document.getElementById('opt-body');
+            tbody.innerHTML = '';
+            
+            let stats = { open: 0, capital: 0, sumDelta: 0, totalPnL: 0, wins: 0, losses: 0, winPnL: 0, lossPnL: 0, totalDays: 0, closedCount: 0 };
+            let breakdown = { "Target Hit": {c:0, w:0, l:0, pnl:0}, "Stopped Out": {c:0, w:0, l:0, pnl:0}, "Time Decay / Manual": {c:0, w:0, l:0, pnl:0}, "Earnings": {c:0, w:0, l:0, pnl:0} };
+
+            optTrades.sort((a, b) => (b.isOpen - a.isOpen) || (new Date(b.entryDate) - new Date(a.entryDate)));
+
+            optTrades.forEach(t => {
+                t.totalCost = t.premiumEntry * t.contracts * 100;
+                const expD = new Date(t.expiration);
+                const entryD = new Date(t.entryDate);
+                
+                t.currentDTE = t.isOpen ? Math.floor((expD - TODAY) / 86400000) : Math.floor((expD - new Date(t.exitDate)) / 86400000);
+                t.daysHeld = t.isOpen ? Math.floor((TODAY - entryD) / 86400000) : Math.floor((new Date(t.exitDate) - entryD) / 86400000);
+                
+                if (!t.isOpen) { t.netPnL = (t.premiumExit - t.premiumEntry) * t.contracts * 100; t.isWin = t.netPnL > 0; } else { t.netPnL = 0; }
+
+                if (t.isOpen) { 
+                    stats.open++; 
+                    stats.capital += t.totalCost; 
+                    stats.sumDelta += parseFloat(t.delta) || 0;
+                } 
+                else {
+                    stats.closedCount++; 
+                    stats.totalPnL += t.netPnL;
+                    stats.totalDays += (t.daysHeld > 0 ? t.daysHeld : 0);
+                    
+                    if (t.isWin) { stats.wins++; stats.winPnL += t.netPnL; } else { stats.losses++; stats.lossPnL += Math.abs(t.netPnL); }
+                    
+                    if(t.exitReason && breakdown[t.exitReason]) {
+                        breakdown[t.exitReason].c++;
+                        t.isWin ? breakdown[t.exitReason].w++ : breakdown[t.exitReason].l++;
+                        breakdown[t.exitReason].pnl += t.netPnL;
+                    }
+                }
+
+                // Render Table Row
+                const statusColor = t.isOpen ? "var(--gold)" : "var(--muted)";
+                const pnlClass = t.isOpen ? "" : (t.netPnL > 0 ? "text-green" : (t.netPnL < 0 ? "text-red" : ""));
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="text-align:left;">${t.entryDate.substring(5)}</td>
+                        <td><strong>${t.ticker}</strong></td>
+                        <td style="font-family:'Tenor Sans';">${t.type}</td>
+                        <td>${t.expiration.substring(5)}</td>
+                        <td>${currency}${t.strike}</td>
+                        <td>${currency}${t.premiumEntry.toFixed(2)}</td>
+                        <td>${currency}${formatMoney(t.totalCost)}</td>
+                        <td>${t.currentDTE}</td>
+                        <td style="color:${statusColor}; font-family:'Tenor Sans'; font-size:11px; letter-spacing:0.1em; text-transform:uppercase;">${t.isOpen ? 'Open' : 'Closed'}</td>
+                        <td class="${pnlClass}" style="font-size:15px; font-weight:700;">${t.isOpen ? '-' : currency+formatMoney(t.netPnL)}</td>
+                        <td style="text-align:center;">
+                            ${t.isOpen ? `<button class="btn btn-sm btn-gold" onclick="openOptClose(${t.id})">Exit</button>` : ''}
+                            <button class="btn btn-sm btn-outline" style="color:var(--danger); border-color:var(--danger);" onclick="deleteOpt(${t.id})">X</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // Update Detailed KPI Grid
+            const pnlEl = document.getElementById('opt-pnl');
+            pnlEl.innerText = `${stats.totalPnL < 0 ? '-' : ''}${currency}${formatMoney(Math.abs(stats.totalPnL))}`;
+            pnlEl.className = `value ${stats.totalPnL > 0 ? 'text-green' : (stats.totalPnL < 0 ? 'text-red' : '')}`;
+            
+            document.getElementById('opt-winrate').innerText = stats.closedCount > 0 ? Math.round((stats.wins / stats.closedCount) * 100) + '%' : '0%';
+            document.getElementById('opt-wins').innerText = stats.wins;
+            document.getElementById('opt-losses').innerText = stats.losses;
+            document.getElementById('opt-avgwin').innerText = stats.wins > 0 ? `${currency}${formatMoney(stats.winPnL / stats.wins)}` : currency+"0";
+            document.getElementById('opt-avgloss').innerText = stats.losses > 0 ? `-${currency}${formatMoney(stats.lossPnL / stats.losses)}` : currency+"0";
+
+            // Update Active Positions & Exposure Summary
+            document.getElementById('opt-open-count').innerText = stats.open;
+            document.getElementById('opt-capital').innerText = currency + formatMoney(stats.capital);
+            document.getElementById('opt-total-count').innerText = optTrades.length;
+            document.getElementById('opt-avgdays').innerText = stats.closedCount > 0 ? Math.round(stats.totalDays / stats.closedCount) : 0;
+            document.getElementById('opt-delta').innerText = stats.open > 0 ? (stats.sumDelta / stats.open).toFixed(2) : "0.00";
+
+            // Update Exit Breakdown List
+            const bdContainer = document.getElementById('opt-breakdown-container');
+            bdContainer.innerHTML = '';
+            for(const [reason, data] of Object.entries(breakdown)) {
+                if(data.c > 0) {
+                    const bdClass = data.pnl > 0 ? 'text-green' : (data.pnl < 0 ? 'text-red' : '');
+                    bdContainer.innerHTML += `
+                        <div class="bd-row">
+                            <div>
+                                <div class="bd-title">${reason}</div>
+                                <div class="bd-stats">${data.c} Trades &middot; <span class="text-green">${data.w}W</span> / <span class="text-red">${data.l}L</span></div>
+                            </div>
+                            <div class="bd-pnl ${bdClass}">${data.pnl < 0 ? '-' : ''}${currency}${formatMoney(Math.abs(data.pnl))}</div>
+                        </div>
+                    `;
+                }
+            }
+            if(bdContainer.innerHTML === '') bdContainer.innerHTML = '<p style="color:var(--muted); font-family:\'Tenor Sans\', sans-serif; font-size: 13px;">No closed trades yet.</p>';
+        }
+
+        document.getElementById('optTradeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            optTrades.push({
+                id: Date.now(),
+                entryDate: document.getElementById('optEntryDate').value,
+                ticker: document.getElementById('optTicker').value.toUpperCase(),
+                type: document.getElementById('optType').value,
+                expiration: document.getElementById('optExpiration').value,
+                strike: parseFloat(document.getElementById('optStrike').value),
+                contracts: parseInt(document.getElementById('optContracts').value),
+                spotEntry: parseFloat(document.getElementById('optSpotEntry').value) || 0,
+                premiumEntry: parseFloat(document.getElementById('optPremiumEntry').value),
+                delta: parseFloat(document.getElementById('optDelta').value) || 0.5,
+                isOpen: true
+            });
+            saveOptions(); closeModal('addOptModal');
+        });
+
+        function openOptClose(id) {
+            document.getElementById('optCloseId').value = id;
+            document.getElementById('optExitDate').value = TODAY.toISOString().split('T')[0];
+            openModal('closeOptModal');
+        }
+
+        document.getElementById('optCloseForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('optCloseId').value);
+            const idx = optTrades.findIndex(t => t.id === id);
+            optTrades[idx].isOpen = false;
+            optTrades[idx].exitDate = document.getElementById('optExitDate').value;
+            optTrades[idx].premiumExit = parseFloat(document.getElementById('optPremiumExit').value);
+            optTrades[idx].exitReason = document.getElementById('optExitReason').value;
+            saveOptions(); closeModal('closeOptModal');
+        });
+
+        function deleteOpt(id) { if(confirm("Delete option record?")) { optTrades = optTrades.filter(t => t.id !== id); saveOptions(); } }
+
+
+        // ==========================================
+        // SPOT PORTFOLIO MODULE: SORT & LIVE PRICES
+        // ==========================================
+        let portData = JSON.parse(localStorage.getItem('rs_portfolioDB')) || { cash: 50000, realized: 0, holdings: [] };
+        let allocChart = null; 
+        
+        let sortField = 'mktValue'; 
+        let sortAsc = false;        
+
+        function savePortfolio() { localStorage.setItem('rs_portfolioDB', JSON.stringify(portData)); renderPortfolio(); }
+
+        async function refreshSpotPrices() {
+            if(portData.holdings.length === 0) return;
+
+            const btn = document.getElementById('refreshPricesBtn');
+            const statusTxt = document.getElementById('lastUpdateText');
+            btn.disabled = true;
+            statusTxt.innerText = "Syncing...";
+
+            let updatedAny = false;
+
+            for (let i = 0; i < portData.holdings.length; i++) {
+                const h = portData.holdings[i];
+                try {
+                    const yfUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${h.ticker}?interval=1m`;
+                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(yfUrl)}`;
+                    
+                    const response = await fetch(proxyUrl);
+                    const data = await response.json();
+                    const parsedData = JSON.parse(data.contents);
+                    const price = parsedData.chart.result[0].meta.regularMarketPrice;
+                    
+                    if (price && !isNaN(price)) {
+                        h.currentPrice = price;
+                        updatedAny = true;
+                    }
+                } catch (err) {
+                    console.error("Fetch failed for " + h.ticker);
+                }
+            }
+            
+            if(updatedAny) savePortfolio();
+            
+            const now = new Date();
+            statusTxt.innerText = "Last update: " + now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0') + ":" + now.getSeconds().toString().padStart(2,'0');
+            btn.disabled = false;
+        }
+
+        function triggerSort(field) {
+            if (sortField === field) {
+                sortAsc = !sortAsc; 
+            } else {
+                sortField = field;
+                sortAsc = false; 
+            }
+            renderPortfolio();
+        }
+
+        function renderPortfolio() {
+            const thead = document.getElementById('port-head');
+            const tbody = document.getElementById('port-body');
+            tbody.innerHTML = '';
+            
+            let totalInvested = 0;
+            let totalMarketValue = 0;
+
+            portData.holdings.forEach(h => {
+                h.invested = h.shares * h.avgCost;
+                h.mktValue = h.shares * h.currentPrice;
+                h.unrPnL = h.mktValue - h.invested;
+                h.unrPct = h.invested > 0 ? (h.unrPnL / h.invested) * 100 : 0;
+                totalInvested += h.invested;
+                totalMarketValue += h.mktValue;
+            });
+
+            const totalEquity = portData.cash + totalMarketValue;
+
+            portData.holdings.forEach(h => {
+                h.allocation = totalEquity > 0 ? (h.mktValue / totalEquity) * 100 : 0;
+            });
+
+            let displayHoldings = [...portData.holdings];
+            if(sortField) {
+                displayHoldings.sort((a, b) => {
+                    let valA = a[sortField];
+                    let valB = b[sortField];
+                    if (typeof valA === 'string') {
+                        return sortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                    }
+                    return sortAsc ? valA - valB : valB - valA;
+                });
+            }
+
+            const getArrow = (field) => sortField === field ? (sortAsc ? ' <span style="font-size:10px; color:var(--gold);">▲</span>' : ' <span style="font-size:10px; color:var(--gold);">▼</span>') : '';
+            
+            thead.innerHTML = `
+                <tr>
+                    <th style="cursor:pointer;" onclick="triggerSort('ticker')">Ticker${getArrow('ticker')}</th>
+                    <th style="cursor:pointer;" onclick="triggerSort('shares')">Shares${getArrow('shares')}</th>
+                    <th style="cursor:pointer;" onclick="triggerSort('avgCost')">Avg Cost${getArrow('avgCost')}</th>
+                    <th style="cursor:pointer;" onclick="triggerSort('currentPrice')">Current Price${getArrow('currentPrice')}</th>
+                    <th style="cursor:pointer;" onclick="triggerSort('mktValue')">Market Value${getArrow('mktValue')}</th>
+                    <th style="cursor:pointer;" onclick="triggerSort('allocation')">Alloc. %${getArrow('allocation')}</th>
+                    <th style="cursor:pointer;" onclick="triggerSort('unrPnL')">Unr. P&L${getArrow('unrPnL')}</th>
+                    <th style="text-align: center; cursor: default;">Actions</th>
+                </tr>
+            `;
+
+            let chartLabels = ['Cash'];
+            let chartData = [portData.cash];
+            let chartColors = ['#e0ddd6']; 
+            const themeColors = ['#0d1b2a', '#b8965a', '#2d6a4f', '#6c757d', '#85182a'];
+
+            portData.holdings.forEach((h, index) => {
+                chartLabels.push(h.ticker);
+                chartData.push(h.mktValue);
+                chartColors.push(themeColors[index % themeColors.length]);
+            });
+
+            displayHoldings.forEach(h => {
+                const pnlClass = h.unrPnL > 0 ? "text-green" : (h.unrPnL < 0 ? "text-red" : "");
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="text-align:left;"><strong>${h.ticker}</strong></td>
+                        <td>${h.shares}</td>
+                        <td>${currency}${formatMoney(h.avgCost)}</td>
+                        <td>${currency}${formatMoney(h.currentPrice)} <button class="btn-sm btn-outline" style="border:none; color:var(--gold);" onclick="openUpdatePrice('${h.ticker}')">✎</button></td>
+                        <td>${currency}${formatMoney(h.mktValue)}</td>
+                        <td style="font-weight:600;">${h.allocation.toFixed(2)}%</td>
+                        <td class="${pnlClass}" style="font-weight:600;">${h.unrPnL>0?'+':''}${currency}${formatMoney(h.unrPnL)} <span style="font-size:11px; font-weight:400;">(${h.unrPct.toFixed(2)}%)</span></td>
+                        <td style="text-align:center;">
+                            <button class="btn btn-sm btn-outline" onclick="openBuyModal('${h.ticker}')">Buy</button>
+                            <button class="btn btn-sm btn-gold" onclick="openSellModal('${h.ticker}')">Sell</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            if(portData.holdings.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--muted); font-family:'Tenor Sans'; padding:30px;">Portfolio is empty. Buy an asset to start tracking.</td></tr>`;
+            }
+
+            const totalUnrealized = totalMarketValue - totalInvested;
+
+            document.getElementById('port-equity').innerText = currency + formatMoney(totalEquity);
+            document.getElementById('port-invested').innerText = currency + formatMoney(totalInvested);
+            document.getElementById('port-cash').innerText = currency + formatMoney(portData.cash);
+            
+            const unrEl = document.getElementById('port-unrealized');
+            unrEl.innerText = `${totalUnrealized < 0 ? '-' : ''}${currency}${formatMoney(Math.abs(totalUnrealized))}`;
+            unrEl.className = `value ${totalUnrealized > 0 ? 'text-green' : (totalUnrealized < 0 ? 'text-red' : '')}`;
+
+            const relEl = document.getElementById('port-realized');
+            relEl.innerText = `${portData.realized < 0 ? '-' : ''}${currency}${formatMoney(Math.abs(portData.realized))}`;
+            relEl.className = `value ${portData.realized > 0 ? 'text-green' : (portData.realized < 0 ? 'text-red' : '')}`;
+
+            updateChart(chartLabels, chartData, chartColors);
+        }
+
+        function updateChart(labels, data, bgColors) {
+            const ctx = document.getElementById('allocationChart').getContext('2d');
+            if(allocChart) allocChart.destroy();
+            
+            const totalSum = data.reduce((acc, val) => acc + val, 0);
+
+            allocChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: labels, datasets: [{ data: data, backgroundColor: bgColors, borderWidth: 1, borderColor: '#fff' }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: { 
+                        legend: { position: 'bottom', labels: { font: { family: "'Tenor Sans', sans-serif" } } },
+                        tooltip: { 
+                            callbacks: { 
+                                label: function(c) { 
+                                    const value = c.raw;
+                                    const percentage = totalSum > 0 ? ((value / totalSum) * 100).toFixed(1) : 0;
+                                    return ` ${currency}${formatMoney(value)} (${percentage}%)`; 
+                                } 
+                            } 
+                        }
+                    }
+                }
+            });
+        }
+
+        // Cash Update
+        document.getElementById('cashForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            portData.cash = parseFloat(document.getElementById('cashInput').value);
+            savePortfolio(); closeModal('cashModal');
+        });
+
+        // Buy Logic
+        function openBuyModal(ticker = '') {
+            document.getElementById('buyTicker').value = ticker;
+            openModal('buyAssetModal');
+        }
+
+        document.getElementById('buyAssetForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const ticker = document.getElementById('buyTicker').value.toUpperCase();
+            const shares = parseFloat(document.getElementById('buyShares').value);
+            const price = parseFloat(document.getElementById('buyPrice').value);
+            const totalCost = shares * price;
+
+            if (portData.cash < totalCost) { alert("Insufficient cash balance!"); return; }
+
+            portData.cash -= totalCost;
+            
+            const existing = portData.holdings.find(h => h.ticker === ticker);
+            if (existing) {
+                const oldTotal = existing.shares * existing.avgCost;
+                existing.shares += shares;
+                existing.avgCost = (oldTotal + totalCost) / existing.shares;
+                existing.currentPrice = price; 
+            } else {
+                portData.holdings.push({ ticker, shares, avgCost: price, currentPrice: price });
+            }
+            savePortfolio(); closeModal('buyAssetModal');
+            refreshSpotPrices();
+        });
+
+        // Sell Logic
+        function openSellModal(ticker) {
+            const h = portData.holdings.find(h => h.ticker === ticker);
+            document.getElementById('sellTicker').value = ticker;
+            document.getElementById('sellTickerLabel').innerText = ticker;
+            document.getElementById('sellAvailableShares').innerText = h.shares;
+            document.getElementById('sellShares').max = h.shares;
+            document.getElementById('sellPrice').value = h.currentPrice;
+            openModal('sellAssetModal');
+        }
+
+        document.getElementById('sellAssetForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const ticker = document.getElementById('sellTicker').value;
+            const sharesToSell = parseFloat(document.getElementById('sellShares').value);
+            const sellPrice = parseFloat(document.getElementById('sellPrice').value);
+            
+            const idx = portData.holdings.findIndex(h => h.ticker === ticker);
+            const h = portData.holdings[idx];
+
+            if (sharesToSell > h.shares) { alert("You cannot sell more shares than you own!"); return; }
+
+            const proceed = sharesToSell * sellPrice;
+            const profit = (sellPrice - h.avgCost) * sharesToSell;
+
+            portData.cash += proceed;
+            portData.realized += profit;
+            
+            h.shares -= sharesToSell;
+            h.currentPrice = sellPrice;
+
+            if (h.shares <= 0) { portData.holdings.splice(idx, 1); }
+
+            savePortfolio(); closeModal('sellAssetModal');
+        });
+
+        // Update Current Price Logic (Manual Fallback)
+        function openUpdatePrice(ticker) {
+            const h = portData.holdings.find(h => h.ticker === ticker);
+            document.getElementById('updateTicker').value = ticker;
+            document.getElementById('updateTickerLabel').innerText = ticker;
+            document.getElementById('updatePrice').value = h.currentPrice;
+            openModal('priceUpdateModal');
+        }
+
+        document.getElementById('updatePriceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const ticker = document.getElementById('updateTicker').value;
+            const newPrice = parseFloat(document.getElementById('updatePrice').value);
+            const h = portData.holdings.find(h => h.ticker === ticker);
+            h.currentPrice = newPrice;
+            savePortfolio(); closeModal('priceUpdateModal');
+        });
+
+    </script>
+</body>
+</html>
